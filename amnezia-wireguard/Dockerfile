@@ -35,7 +35,7 @@ RUN cd /tmp/wg-tools/src \
     && make \
     && make install \
     && git clone --depth=1 --branch $AWG_GO\
-        "https://github.com/amnezia-vpn/amneziawg-go.git" /tmp/wireguard \
+        "https://github.com/amnezia-vpn/amneziawg-go.git" /tmp/wireguard 
     
 RUN cd /tmp/wireguard \
     && make \
