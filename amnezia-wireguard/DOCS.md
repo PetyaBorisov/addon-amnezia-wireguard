@@ -1,118 +1,96 @@
+Переведено DeepSeek
+Автор форка форка PetyaBorisov
+Автор форка yury-sannikov
+
 # AmneziaWG
 
-AmneziaWG (AmneziaWireGuard) is a fork of the regular WireGuard-Go with the addition of functions to bypass blocking and reduce the likelihood of protocol detection. One of the key features of AmneziaWG is backward compatibility with WireGuard. This means that when using AmneziaWG, unless the configuration specifies specific parameters for protocol obfuscation, it will act as a standard WireGuard.
+AmneziaWG (AmneziaWireGuard) — это форк обычного WireGuard-Go с добавлением функций для обхода блокировок и снижения вероятности обнаружения протокола. Одна из ключевых особенностей AmneziaWG — обратная совместимость с WireGuard. Это означает, что при использовании AmneziaWG, если в конфигурации не указаны специальные параметры для обфускации протокола, он будет работать как стандартный WireGuard.
 
-What's special?
+Что особенного?
 
-Before the session starts, the client sends several packets with random data (the number of such packets Jc and their minimum and maximum size in bytes Jmin, Jmax is set in the config)
+Перед началом сессии клиент отправляет несколько пакетов со случайными данными (количество таких пакетов Jc, их минимальный и максимальный размер в байтах Jmin, Jmax задаются в конфиге).
 
-The header of the handshake packet (Initiator to Responder) and the response packet (Responder to Initiator) have been changed; these values are also set in the config (H1 and H2)
+Изменён заголовок пакета рукопожатия (Initiator to Responder) и ответного пакета (Responder to Initiator); эти значения также задаются в конфиге (H1 и H2).
 
-Init handshake packets additionally have garbage at the beginning of the data,
-the dimensions are determined by the values of S1 and S2. (by default, the initial handshake packet has a fixed size (148 bytes), after adding garbage, its size will be 148 + the length of random bytes).
+Пакеты инициирующего рукопожатия дополнительно содержат мусор в начале данных; размер определяется значениями S1 и S2. (по умолчанию начальный пакет рукопожатия имеет фиксированный размер (148 байт), после добавления мусора его размер составит 148 + длина случайных байт).
 
-The header of data packages and special “Under Load” packages has been changed - H4 and H3, respectively.
-More details about the new custom fields:
+Изменён заголовок пакетов данных и специальных пакетов «Under Load» — H4 и H3 соответственно.
 
-- `junk_packet_count` Jc (Junk packet count) - the number of packets with random data that are sent before the start of the session
-- `junk_packet_min_size` JMin (Junk packet minimum size) - minimum packet size for Junk packet. That is, all randomly generated packets will have a size no less than Jmin
-- `junk_packet_max_size` JMax (Junk packet maximum size) - maximum size for Junk packets
-- `init_packet_junk_size` S1 (Init packet junk size) - the size of random data that will be added to the init packet, the size of which is initially fixed
-- `response_packet_junk_size` S2 (Response packet junk size) - the size of random data that will be added to the response, the size of which is initially fixed
-- `init_packet_magic_header` H1 (Init packet magic header) - header of the first byte of the handshake
-- `response_packet_magic_header` H2 (Response packet magic header) - header of the first byte of the handshake response
-- `transport_packet_magic_header` H3 (Transport packet magic header) - header of the transmitted data packet
-- `uload_packet_magic_header` H4 (Underload packet magic header) - UnderLoad packet header
+Подробнее о новых пользовательских полях:
 
-As you can guess, the headings H1, H2, H3, H4 should be different. If you set Jc, S1 and S2 to zero, then there will be no garbage.
+- `junk_packet_count` Jc (количество мусорных пакетов) — количество пакетов со случайными данными, которые отправляются перед началом сессии.
+- `junk_packet_min_size` JMin (минимальный размер мусорного пакета) — минимальный размер пакета для Junk packet. То есть все случайно сгенерированные пакеты будут иметь размер не меньше Jmin.
+- `junk_packet_max_size` JMax (максимальный размер мусорного пакета) — максимальный размер для мусорных пакетов.
+- `init_packet_junk_size` S1 (размер мусора в пакете инициализации) — размер случайных данных, которые будут добавлены к пакету инициализации, размер которого изначально фиксирован.
+- `response_packet_junk_size` S2 (размер мусора в ответном пакете) — размер случайных данных, которые будут добавлены к ответу, размер которого изначально фиксирован.
+- `init_packet_magic_header` H1 (магический заголовок пакета инициализации) — заголовок первого байта рукопожатия.
+- `response_packet_magic_header` H2 (магический заголовок ответного пакета рукопожатия) — заголовок первого байта ответа на рукопожатие.
+- `transport_packet_magic_header` H3 (магический заголовок транспортного пакета) — заголовок пакета передаваемых данных.
+- `uload_packet_magic_header` H4 (магический заголовок пакета UnderLoad) — заголовок пакета UnderLoad.
 
-> **_NOTE:_**
-A regular WG server can work with the AmneziaWG configuration in which Jc, Jmin, Jmax are set, and the remaining fields are zero. Thus, the AWG client will simply send garbage packets before init packets, which has absolutely no effect on the operation of the WG protocol, but may confuse DPI.
+Как вы можете догадаться, заголовки H1, H2, H3, H4 должны быть разными. Если установить Jc, S1 и S2 в ноль, то мусора не будет.
 
-## WireGuard status API
+> **ПРИМЕЧАНИЕ:**
+> Обычный сервер WG может работать с конфигурацией AmneziaWG, в которой заданы Jc, Jmin, Jmax, а остальные поля равны нулю. Таким образом, клиент AWG будет просто отправлять мусорные пакеты перед пакетами инициализации, что абсолютно не влияет на работу протокола WG, но может сбить с толку DPI.
 
-This add-on provides a simple WireGuard status API. This API is not an
-official API, darn simple, and experimental, but does allow you to pull
-in data from the add-on into Home Assistant.
+## API состояния WireGuard
 
-With the use of the [Home Assistant RESTful][ha-rest] integration, one should
-be able to grab some interesting data from this add-on.
+Это дополнение предоставляет простой API состояния WireGuard. Этот API не является официальным, чертовски прост и экспериментален, но позволяет получать данные из дополнения в Home Assistant.
 
-Example:
+Используя интеграцию [Home Assistant RESTful][ha-rest], можно получить некоторые интересные данные из этого дополнения.
+
+Пример:
 
 ```yaml
 sensor:
   - platform: rest
-    resource: http://53948f79_wireguard
+    resource: http://a0d7b954-wireguard
 ```
-This addon features `ping_loss` and `ping_avg` attributes. By default, it is set to `-1`
-To enable peer ping "average" and "packet loss" metrics, specify the `ping_address` address of the peer.
+
+Это дополнение имеет атрибуты `ping_loss` и `ping_avg`. По умолчанию установлено значение `-1`. Чтобы включить метрики «среднего» пинга и «потери пакетов» для пира, укажите адрес `ping_address` пира.
+
 ---
 
+# Дополнение Home Assistant Community Add-on: WireGuard
 
-# Home Assistant Community Add-on: WireGuard
+[WireGuard®][wireguard] — это чрезвычайно простой, но быстрый и современный VPN, использующий передовую криптографию. Он стремится быть быстрее, проще, компактнее и полезнее, чем IPsec, избегая при этом огромной головной боли. Он предназначен для значительно более высокой производительности, чем OpenVPN. WireGuard разработан как универсальный VPN для работы как на встраиваемых интерфейсах, так и на суперкомпьютерах, подходящий для множества различных ситуаций.
 
-[WireGuard®][wireguard] is an extremely simple yet fast and modern VPN that
-utilizes state-of-the-art cryptography. It aims to be faster, simpler, leaner,
-and more useful than IPsec, while avoiding the massive headache.
+Изначально выпущенный для ядра Linux, теперь он кроссплатформенный (Windows, macOS, BSD, iOS, Android) и широко развертываемый, в том числе через дополнение Hass.io!
 
-It intends to be considerably more performant than OpenVPN. WireGuard is
-designed as a general-purpose VPN for running on embedded interfaces and
-supercomputers alike, fit for many different circumstances.
+WireGuard в настоящее время находится в активной разработке, но уже сейчас его можно считать самым безопасным, простым в использовании и самым простым VPN-решением в индустрии.
 
-Initially released for the Linux kernel, it is now cross-platform (Windows,
-macOS, BSD, iOS, Android) and widely deployable,
-including via an Hass.io add-on!
+## Установка
 
-WireGuard is currently under heavy development, but already it might be
-regarded as the most secure, easiest to use, and the simplest VPN solution
-in the industry.
+WireGuard довольно прост, однако может быть достаточно сложным для пользователя, не знакомого со всей используемой терминологией. Дополнение берет на себя многие вещи (если вы хотите).
 
-## Installation
+Выполните следующие шаги для установки и быстрого старта:
 
-WireGuard is pretty simple, however, can be quite complex for user that isn't
-familiar with all terminology used. The add-on takes care of a lot of things
-for you (if you want).
+1.  Нажмите кнопку My Home Assistant ниже, чтобы открыть дополнение в вашем экземпляре Home Assistant.
 
-Follow the following steps for installation & a quick start:
+    [![Открыть это дополнение в вашем экземпляре Home Assistant.][addon-badge]][addon]
 
-1. Click the Home Assistant My button below to open the add-on on your Home
-   Assistant instance.
+2.  Нажмите кнопку «Установить», чтобы установить дополнение.
+3.  Установите параметр конфигурации `host` на ваш внешний адрес Home Assistant, например, `myautomatedhome.duckdns.org`.
+4.  Измените имя пира на что-то полезное, например, `myphone`.
+5.  Сохраните конфигурацию.
+6.  Запустите дополнение «WireGuard».
+7.  Проверьте журналы дополнения «WireGuard», чтобы убедиться, что всё прошло хорошо.
+8.  Перенаправьте порт `51820` (UDP!) в вашем роутере на ваш экземпляр Home Assistant.
+9.  Скачайте/откройте файл `/ssl/wireguard/myphone/qrcode.png`, хранящийся на вашем экземпляре Home Assistant, например, с помощью Samba, Visual Studio Code или дополнения Configurator.
+10. Установите приложение WireGuard на свой телефон.
+11. Добавьте новое подключение WireGuard на телефоне, отсканировав QR-код.
+12. Подключайтесь!
 
-   [![Open this add-on in your Home Assistant instance.][addon-badge]][addon]
+## Конфигурация
 
-1. Click the "Install" button to install the add-on.
-1. Set the `host` configuration option to your Home Assistant (external)
-   address, e.g., `myautomatedhome.duckdns.org`.
-1. Change the name of the peer to something useful, e.g., `myphone`.
-1. Save the configuration.
-1. Start the "WireGuard" add-on
-1. Check the logs of the "WireGuard" add-on to see if everything went well.
-1. Forward port `51820` (UDP!) in your router to your Home Assistant instance.
-1. Download/Open the file `/ssl/wireguard/myphone/qrcode.png` stored on your
-   Home Assistant instance, e.g., using Samba, Visual Studio Code or the
-   Configurator add-on.
-1. Install the WireGuard app on your phone.
-1. Add a new WireGuard connection to your phone, by scanning the QR code.
-1. Connect!
+Для начала, не пугайтесь количества опций и сложных терминов, которые предоставляет это дополнение. WireGuard может быть сложным программным обеспечением, но у дополнения есть лишь несколько простых обязательных настроек. Всё остальное обрабатывается дополнением. Однако, если вы хотите настроить более сложную конфигурацию, дополнение также это позволяет.
 
-## Configuration
+Если вы знакомы с WireGuard, обратите внимание на следующее:
+Конфигурация WireGuard очень похожа на все термины, используемые в конфигурации WireGuard. Однако есть одно большое отличие: дополнение способно генерировать конфигурации как для самого дополнения, так и для пиров (клиентов).
 
-Now, for starters, don't get scared by the number of options and difficult
-terms this add-on provides. WireGuard can be a complex piece of software,
-but the add-on only has a few, simple, required settings. All the rest is
-handled by the add-on. However, If you would like to set up a more complex
-configuration, the add-on would allow that, too.
+**Примечание:** _Не забудьте перезапустить дополнение после изменения конфигурации._
 
-If you are familiar with WireGuard, please note the following:
-The configuration of WireGuard looks very similar to all terms used in the
-WireGuard configuration. There is, however, one big difference: The
-add-on is able to generate configurations for the add-on, but also for the
-peers (clients).
-
-**Note**: _Remember to restart the add-on when the configuration is changed._
-
-A little more extensive example add-on configuration:
+Немного более подробный пример конфигурации дополнения:
 
 ```yaml
 log_level: info
@@ -139,87 +117,61 @@ peers:
       - 192.168.1.0/24
 ```
 
-**Note**: _This is just an example, don't copy and paste it! Create your own!_
+**Примечание:** _Это всего лишь пример, не копируйте и не вставляйте его! Создайте свой собственный!_
 
-### Option: `server.host`
+### Опция: `server.host`
 
-This configuration option is the hostname that your clients will use to connect
-to your WireGuard add-on. The `host` is mainly used to generate client
-configurations and SHOULD NOT contain a port. If you want to change the port,
-use the "Network" section of the add-on configuration.
+Этот параметр конфигурации — имя хоста, которое ваши клиенты будут использовать для подключения к вашему дополнению WireGuard. `host` в основном используется для генерации конфигураций клиентов и НЕ ДОЛЖЕН содержать порт. Если вы хотите изменить порт, используйте раздел «Сеть» конфигурации дополнения.
 
-Example: `myautomatedhome.duckdns.org`, for local testing `homeassistant.local`
-will actually work.
+Пример: `myautomatedhome.duckdns.org`, для локального тестирования подойдет `homeassistant.local`.
 
-DO NOT attempt to use a URL such as a Nabu Casa endpoint, the entry needs to be
-either a DNS entry or IP address that is accessible by the clients.
+НЕ пытайтесь использовать URL-адрес, такой как конечная точка Nabu Casa; запись должна быть либо DNS-записью, либо IP-адресом, доступным для клиентов.
 
-### Option: `server.addresses`
+### Опция: `server.addresses`
 
-A list of IP (IPv4 or IPv6) addresses (optionally with CIDR masks) to be
-assigned to the server/add-on interface.
+Список IP-адресов (IPv4 или IPv6) (опционально с масками CIDR), которые будут назначены интерфейсу сервера/дополнения.
 
-It is strongly advised to create/use a separate IP address space from your
-home network, e.g., if your home network uses `192.168.1.x` then DO NOT use
-that for the add-on.
+Настоятельно рекомендуется создать/использовать отдельное адресное пространство IP от вашей домашней сети; например, если ваша домашняя сеть использует `192.168.1.x`, то НЕ ИСПОЛЬЗУЙТЕ это для дополнения.
 
-### Option: `server.dns` _(optional)_
+### Опция: `server.dns` _(необязательно)_
 
-A list of DNS servers used by the add-on and the configuration generated for
-the clients. This configuration option is optional, and if no DNS servers are
-set, it will use the built-in DNS server from Hass.io.
+Список DNS-серверов, используемых дополнением и конфигурацией, сгенерированной для клиентов. Этот параметр конфигурации необязателен, и если DNS-серверы не установлены, будет использоваться встроенный DNS-сервер Hass.io.
 
-**If you are running the [AdGuard][adguard] add-on,
-you can add `172.30.32.1` as a DNS IP address in the list.** This will cause your
-clients to use those. What this does, it effectively making your clients
-to have ad-filtering (e.g., your mobile phone), while not at home.
+**Если вы используете дополнение [AdGuard][adguard], вы можете добавить `172.30.32.1` в качестве IP-адреса DNS в список.** Это заставит ваших клиентов использовать его. Что это дает: это фактически заставляет ваших клиентов иметь фильтрацию рекламы (например, на вашем мобильном телефоне), даже когда вы не дома.
 
-### Option: `server.private_key` _(optional)_
+### Опция: `server.private_key` _(необязательно)_
 
-Allows you to provide your own base64 private key generated by `wg genkey`.
-This option supports the use of `!secret`. If you don't supply one,
-the add-on will generate one for you and store it in:
-`/ssl/wireguard/private_key`.
+Позволяет вам указать свой собственный закрытый ключ в формате base64, сгенерированный командой `wg genkey`. Эта опция поддерживает использование `!secret`. Если вы не укажете его, дополнение сгенерирует его для вас и сохранит в: `/ssl/wireguard/private_key`.
 
-### Option: `server.public_key` _(optional)_
+### Опция: `server.public_key` _(необязательно)_
 
-Allows you to provide your own a base64 public key calculated by `wg pubkey`
-from a private key. This option supports the use of `!secret`.
+Позволяет вам указать свой собственный открытый ключ в формате base64, вычисленный командой `wg pubkey` из закрытого ключа. Эта опция поддерживает использование `!secret`.
 
-If you don't supply one, the add-on will calculate one based on the private
-key that was supplied via the `server.private_key` or, in case no private key
-was supplied, calculate it from the generated private key.
+Если вы не укажете его, дополнение вычислит его на основе закрытого ключа, который был предоставлен через `server.private_key`, или, если закрытый ключ не был предоставлен, вычислит его из сгенерированного закрытого ключа.
 
-### Option: `server.fwmark` _(optional)_
+### Опция: `server.fwmark` _(необязательно)_
 
-A 32-bit fwmark for outgoing packets. May be specified in hexadecimal by
-prepending "0x". If you don't know what this is, then you probably don't
-need it.
+32-битная fwmark для исходящих пакетов. Может быть указана в шестнадцатеричном формате с префиксом «0x». Если вы не знаете, что это такое, вероятно, она вам не нужна.
 
-### Option: `server.table` _(optional)_
+### Опция: `server.table` _(необязательно)_
 
-Controls the routing table to which routes are added. Setting it to `off`
-disables the creation of routes altogether. When not provided, the add-on
-adds routes to the default table and enables special handling of default routes.
+Управляет таблицей маршрутизации, в которую добавляются маршруты. Установка значения `off` полностью отключает создание маршрутов. Если не указано, дополнение добавляет маршруты в таблицу по умолчанию и включает специальную обработку маршрутов по умолчанию.
 
-### Option: `server.pre_up` _(optional)_
+### Опция: `server.pre_up` _(необязательно)_
 
-Allows you to run commands before WireGuard is started.
+Позволяет выполнять команды перед запуском WireGuard.
 
-### Option: `server.pre_down` _(optional)_
+### Опция: `server.pre_down` _(необязательно)_
 
-Allows you to run commands before WireGuard is stopped.
+Позволяет выполнять команды перед остановкой WireGuard.
 
-### Option: `server.post_up` _(optional)_
+### Опция: `server.post_up` _(необязательно)_
 
-Allows you to run commands after WireGuard has been started. This is useful
-for modifying things like routing. If not provided, the add-on will by default
-route all traffic coming in from the VPN through your home network.
+Позволяет выполнять команды после запуска WireGuard. Это полезно для изменения таких вещей, как маршрутизация. Если не указано, дополнение по умолчанию будет маршрутизировать весь трафик, поступающий из VPN, через вашу домашнюю сеть.
 
-If you like to disable that, setting this option to `"off"`,
-will disable that behavior.
+Если вы хотите отключить это, установите для этой опции значение `"off"`, это отключит такое поведение.
 
-By default it executes the following:
+По умолчанию выполняются следующие команды:
 
 ```bash
 iptables -A FORWARD -i %i -j ACCEPT
@@ -227,16 +179,13 @@ iptables -A FORWARD -o %i -j ACCEPT
 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 ```
 
-### Option: `server.post_down` _(optional)_
+### Опция: `server.post_down` _(необязательно)_
 
-Allows you to run commands after WireGuard has been stopped. This is useful
-for modifying things like routing. If not provided, the add-on will by default
-remove the default rules created by the `post_up` defaults.
+Позволяет выполнять команды после остановки WireGuard. Это полезно для изменения таких вещей, как маршрутизация. Если не указано, дополнение по умолчанию удалит правила, созданные значениями по умолчанию `post_up`.
 
-If you like to disable that, setting this option to `"off"`,
-will disable that behavior.
+Если вы хотите отключить это, установите для этой опции значение `"off"`, это отключит такое поведение.
 
-By default it executes the following:
+По умолчанию выполняются следующие команды:
 
 ```bash
 iptables -D FORWARD -i %i -j ACCEPT
@@ -244,176 +193,116 @@ iptables -D FORWARD -o %i -j ACCEPT
 iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 ```
 
-### Option: `server.mtu` _(optional)_
+### Опция: `server.mtu` _(необязательно)_
 
-The MTU is automatically determined from the endpoint addresses or the
-system default route, which is usually a sane choice.
+MTU автоматически определяется из адресов конечных точек или системного маршрута по умолчанию, что обычно является разумным выбором.
 
-However, to manually specify an MTU to override this automatic discovery,
-this value may be specified explicitly.
+Однако, чтобы вручную указать MTU для переопределения этого автоматического определения, это значение может быть указано явно.
 
-### Option: `peers.name`
+### Опция: `peers.name`
 
-This is an identifier for you. It helps you to know what this peer is, e.g.,
-`myphone`, `mylaptop`, `ninja`.
+Это идентификатор для вас. Он помогает вам понять, что это за пир, например, `myphone`, `mylaptop`, `ninja`.
 
-This name is also used for creating the directory in `/ssl/wireguard` where
-the generated client configuration and QR codes are stored. Therefore, a name
-has a maximum of 32 characters, can only contain A-Z (or a-z) and 0-9.
-Names may contain a hyphen (-) but must not start or end with one.
+Это имя также используется для создания каталога в `/ssl/wireguard`, где хранятся сгенерированные конфигурации клиентов и QR-коды. Поэтому имя должно содержать не более 32 символов, может содержать только A-Z (или a-z) и 0-9. Имена могут содержать дефис (-), но не должны начинаться или заканчиваться им.
 
-### Option: `peers.addresses`
+### Опция: `peers.addresses`
 
-A list of IP (IPv4 or IPv6) addresses (optionally with CIDR masks) to be
-assigned to the peer.
+Список IP-адресов (IPv4 или IPv6) (опционально с масками CIDR), которые будут назначены пиру.
 
-This is used in the client configuration, but also for used by the add-on to
-set the allowed IPs (unless overriden by the `peers.allowed_ips` option.)
+Это используется в конфигурации клиента, а также используется дополнением для установки разрешенных IP-адресов (если не переопределено опцией `peers.allowed_ips`).
 
-### Option: `peers.private_key` _(optional)_
+### Опция: `peers.private_key` _(необязательно)_
 
-Allows you to provide your own base64 private key generated by `wg genkey` for
-the peer. This option supports the use of `!secret`.
+Позволяет вам указать свой собственный закрытый ключ в формате base64, сгенерированный командой `wg genkey` для пира. Эта опция поддерживает использование `!secret`.
 
-Technically, the add-on does not need this, however, since the add-on can
-generate client configurations, it can be helpful.
+Технически дополнению это не нужно, однако, поскольку дополнение может генерировать конфигурации клиентов, это может быть полезно.
 
-If no private key and no public key is provided, the add-on will generate one
-for you and store it in: `/ssl/wireguard/<peer.name>/`.
+Если не указан ни закрытый, ни открытый ключ, дополнение сгенерирует их для вас и сохранит в: `/ssl/wireguard/<peer.name>/`.
 
-**Private keys, in general, should only be known by client, while this add-on
-supports setting or generating one for your client is helpful and easy, it
-isn't the best security practice. The best practice is to provide just the
-`peers.public_key` option below, the add-on will honor that.**
+**Закрытые ключи, как правило, должны быть известны только клиенту. Хотя это дополнение поддерживает установку или генерацию закрытого ключа для вашего клиента (что полезно и просто), это не является наилучшей практикой безопасности. Лучшей практикой является предоставление только опции `peers.public_key` ниже; дополнение будет учитывать это.**
 
-### Option: `peers.public_key` _(optional, but recommended!)_
+### Опция: `peers.public_key` _(необязательно, но рекомендуется!)_
 
-Allows you to provide your own a base64 public key calculated by `wg pubkey`
-from a private key. This option supports the use of `!secret`.
+Позволяет вам указать свой собственный открытый ключ в формате base64, вычисленный командой `wg pubkey` из закрытого ключа. Эта опция поддерживает использование `!secret`.
 
-If you don't supply one, the add-on will calculate one based on the private
-key that was supplied via the `peer.private_key` or, in case no private key
-was supplied, calculated it from the generated private key for this peer.
+Если вы не укажете его, дополнение вычислит его на основе закрытого ключа, который был предоставлен через `peer.private_key`, или, если закрытый ключ не был предоставлен, вычислит его из сгенерированного закрытого ключа для этого пира.
 
-**While this add-on can generate public/private keypairs, from best security
-practice perspective, it is strongly advised to manually provide a public key
-for each of your peers. In that case, the add-on will not generate or configure
-a private key by itself.**
+**Хотя это дополнение может генерировать пары открытого/закрытого ключей, с точки зрения лучших практик безопасности настоятельно рекомендуется вручную предоставить открытый ключ для каждого из ваших пиров. В этом случае дополнение не будет генерировать или настраивать закрытый ключ самостоятельно.**
 
-### Option: `peers.allowed_ips` _(optional)_
+### Опция: `peers.allowed_ips` _(необязательно)_
 
-**This configuration only valid for the add-on/server end and does not
-affect client configurations!**
+**Эта конфигурация действительна только для стороны дополнения/сервера и не влияет на конфигурации клиентов!**
 
-A list of IPs (IPv4 or IPv6) addresses (optionally with CIDR masks) from which
-incoming traffic for this peer is allowed and to which outgoing traffic for
-this peer is directed.
+Список IP-адресов (IPv4 или IPv6) (опционально с масками CIDR), с которых входящий трафик для этого пира разрешен и на который направляется исходящий трафик для этого пира.
 
-If there are no IP addresses configured, the add-on will use the addresses
-listed in `peers.addresses`.
+Если IP-адреса не настроены, дополнение будет использовать адреса, перечисленные в `peers.addresses`.
 
-The catch-all `0.0.0.0/0` may be specified for matching all IPv4 addresses,
-and `::/0` may be specified for matching all IPv6 addresses.
+Может быть указан универсальный `0.0.0.0/0` для соответствия всем IPv4-адресам и `::/0` для соответствия всем IPv6-адресам.
 
-### Option: `peers.client_allowed_ips` _(optional)_
+### Опция: `peers.client_allowed_ips` _(необязательно)_
 
-**This configuration only valid for the peer end/client configuration and does
-not affect the server/add-on!**
+**Эта конфигурация действительна только для стороны пира/клиента и не влияет на сервер/дополнение!**
 
-A list of IPs (IPv4 or IPv6) addresses (optionally with CIDR masks) from which
-incoming traffic from the server is allowed and to which outgoing traffic for
-this peer is directed.
+Список IP-адресов (IPv4 или IPv6) (опционально с масками CIDR), с которых входящий трафик от сервера разрешен и на который направляется исходящий трафик для этого пира.
 
-The catch-all `0.0.0.0/0` may be specified for matching all IPv4 addresses,
-and `::/0` may be specified for matching all IPv6 addresses.
+Универсальный `0.0.0.0/0` может быть указан для соответствия всем IPv4-адресам, а `::/0` — для всех IPv6-адресов.
 
-If not configured, the add-on will use `0.0.0.0/0` in the generated client
-configuration, routing all traffic on your client through the VPN tunnel.
+Если не настроено, дополнение будет использовать `0.0.0.0/0` в сгенерированной конфигурации клиента, маршрутизируя весь трафик на вашем клиенте через VPN-туннель.
 
-### Option: `peers.persistent_keep_alive` _(optional)_
+### Опция: `peers.persistent_keep_alive` _(необязательно)_
 
-A seconds interval, between 1 and 65535 inclusive, of how often to send an
-authenticated empty packet to the peer for the purpose of keeping a stateful
-firewall or NAT mapping valid persistently.
+Интервал в секундах от 1 до 65535 включительно, определяющий, как часто отправлять аутентифицированный пустой пакет пиру для поддержания активного состояния межсетевого экрана с состоянием или трансляции сетевых адресов (NAT).
 
-For example, if the interface very rarely sends traffic, but it might at
-anytime receive traffic from a peer, and it is behind NAT, the interface might
-benefit from having a persistent keepalive interval of 25 seconds.
+Например, если интерфейс очень редко отправляет трафик, но может в любое время получать трафик от пира и находится за NAT, интерфейсу может быть полезно иметь постоянный интервал keepalive в 25 секунд.
 
-By default or when unspecified, this option is set to 25 seconds. This is
-different from the WireGuard default, since the use case for this add-on is
-most likely to be installed in home setups behind a NAT.
+По умолчанию или если не указано, эта опция установлена на 25 секунд. Это отличается от значения по умолчанию WireGuard, поскольку вариант использования этого дополнения, скорее всего, будет в домашних установках за NAT.
 
-If set to "off", this option is disabled.
+Если установлено значение «off», эта опция отключена.
 
-### Option: `peers.endpoint` _(optional)_
+### Опция: `peers.endpoint` _(необязательно)_
 
-An endpoint IP or hostname, followed by a colon, and then a port number. This
-is used by the add-on/server to connect to its peer.
+IP-адрес или имя хоста конечной точки, за которым следует двоеточие и номер порта. Это используется дополнением/сервером для подключения к своему пиру.
 
-This is completely optional as the endpoint will be updated automatically
-to the most recent source IP address and port of correctly authenticated
-packets from the peer/client.
+Это совершенно необязательно, так как конечная точка будет автоматически обновлена до последнего исходного IP-адреса и порта правильно аутентифицированных пакетов от пира/клиента.
 
-### Option: `peers.pre_shared_key` _(optional)_
+### Опция: `peers.pre_shared_key` _(необязательно)_
 
-A base64 preshared key generated by `wg genpsk`. This option adds an additional
-layer of symmetric-key cryptography to be mixed into the already existing
-public-key cryptography, for post-quantum resistance.
+Общий ключ в формате base64, сгенерированный командой `wg genpsk`. Эта опция добавляет дополнительный уровень симметричной криптографии, смешиваемой с уже существующей криптографией с открытым ключом, для пост-квантовой устойчивости.
 
-### Option: `peers.fwmark` _(optional)_
+### Опция: `peers.fwmark` _(необязательно)_
 
-**This configuration only valid for the peer end/client configuration and does
-not affect the server/add-on!**
+**Эта конфигурация действительна только для стороны пира/клиента и не влияет на сервер/дополнение!**
 
-A 32-bit fwmark for outgoing packets. May be specified in hexadecimal by
-prepending "0x". If you don't know what this is, then you probably don't
-need it.
+32-битная fwmark для исходящих пакетов. Может быть указана в шестнадцатеричном формате с префиксом «0x». Если вы не знаете, что это такое, вероятно, она вам не нужна.
 
-### Option: `log_level` _(optional)_
+### Опция: `log_level` _(необязательно)_
 
-The `log_level` option controls the level of log output by the addon and can
-be changed to be more or less verbose, which might be useful when you are
-dealing with an unknown issue. Possible values are:
+Опция `log_level` управляет уровнем вывода журнала дополнением и может быть изменена для большей или меньшей подробности, что может быть полезно при решении неизвестной проблемы. Возможные значения:
 
-- `trace`: Show every detail, like all called internal functions.
-- `debug`: Shows detailed debug information.
-- `info`: Normal (usually) interesting events.
-- `warning`: Exceptional occurrences that are not errors.
-- `error`: Runtime errors that do not require immediate action.
-- `fatal`: Something went terribly wrong. Add-on becomes unusable.
+- `trace`: Показывать каждую деталь, например, все вызываемые внутренние функции.
+- `debug`: Показывать подробную отладочную информацию.
+- `info`: Обычные (как правило) интересные события.
+- `warning`: Исключительные случаи, не являющиеся ошибками.
+- `error`: Ошибки времени выполнения, не требующие немедленных действий.
+- `fatal`: Что-то пошло ужасно не так. Дополнение становится непригодным для использования.
 
-Please note that each level automatically includes log messages from a
-more severe level, e.g., `debug` also shows `info` messages. By default,
-the `log_level` is set to `info`, which is the recommended setting unless
-you are troubleshooting.
+Обратите внимание, что каждый уровень автоматически включает сообщения журнала с более серьезного уровня, например, `debug` также показывает сообщения `info`. По умолчанию `log_level` установлен на `info`, что является рекомендуемой настройкой, если только вы не устраняете неполадки.
 
-## Finding generated client configurations
+## Поиск сгенерированных конфигураций клиентов
 
-All generated files are stored in `/ssl/wireguard`. This includes the
-client configurations generated by this add-on.
+Все сгенерированные файлы хранятся в `/ssl/wireguard`. Сюда входят конфигурации клиентов, сгенерированные этим дополнением.
 
-Each peer/client will have its own folder, by the name specified in the
-add-on configuration. The add-on additionally generates an image for each
-client containing a QR code, to allow a quick an easy set up on, e.g., your
-mobile phone.
+Каждый пир/клиент будет иметь свою собственную папку с именем, указанным в конфигурации дополнения. Дополнение дополнительно генерирует для каждого клиента изображение, содержащее QR-код, для быстрой и легкой настройки, например, на вашем мобильном телефоне.
 
-## Using on a Generic Linux/Debian/Ubuntu-based Hass.io system
+## Использование в системе Hass.io на базе обычного Linux/Debian/Ubuntu
 
-The HassOS operating system for Hass.io by default has installed WireGuard
-support in its Linux kernel. However, if you run Hass.io on a generic Linux
-installation (e.g., based on Ubuntu or Debian), WireGuard support is not
-available by default.
+Операционная система HassOS для Hass.io по умолчанию имеет поддержку WireGuard в своем ядре Linux. Однако, если вы запускаете Hass.io в обычной установке Linux (например, на базе Ubuntu или Debian), поддержка WireGuard по умолчанию недоступна.
 
-This will cause the add-on to throw a large warning during the start up.
-However, the add-on will work as advertised!
+Это приведет к тому, что дополнение выдаст большое предупреждение во время запуска. Однако дополнение будет работать как заявлено!
 
-When this happens, the add-on falls back on a standalone instance of WireGuard
-running inside the add-on itself. This method has drawbacks in terms of
-performance.
+Когда это происходит, дополнение переключается на автономный экземпляр WireGuard, работающий внутри самого дополнения. Этот метод имеет недостатки с точки зрения производительности.
 
-In order to run WireGuard optimal, you should install WireGuard on your
-host system. The add-on will pick that up automatically on the next start.
+Для оптимальной работы WireGuard вам следует установить WireGuard на вашей хост-системе. Дополнение автоматически подхватит это при следующем запуске.
 
 ### Ubuntu
 
@@ -439,28 +328,21 @@ sudo dnf copr enable jdoss/wireguard
 sudo dnf install wireguard-dkms wireguard-tools
 ```
 
-### Other
+### Другие системы
 
-If you have a different operating system on which you run Hass.io on, please
-consult [WireGuard installation manual][wireguard-install]
+Если у вас другая операционная система, на которой вы запускаете Hass.io, обратитесь к [руководству по установке WireGuard][wireguard-install].
 
-## _"Missing WireGuard kernel module. Falling back to slow userspace implementation."_
+## «Отсутствует модуль ядра WireGuard. Переход на медленную реализацию пользовательского пространства.»
 
-If you've seen this warning in the add-on logs files, please check the chapter
-above for more information.
+Если вы видели это предупреждение в файлах журнала дополнения, пожалуйста, обратитесь к главе выше для получения дополнительной информации.
 
-## _"IP forwarding is disabled on the host system!"_
+## «Пересылка IP отключена в хост-системе!»
 
-IP forwarding is the ability for an operating system to accept incoming
-network packets on one interface, recognize that it is not meant for the
-system itself, but that it should be passed on to another network,
-and then forwards it accordingly.
+Пересылка IP — это способность операционной системы принимать входящие сетевые пакеты на одном интерфейсе, распознавать, что они предназначены не для самой системы, а должны быть переданы в другую сеть, и затем соответствующим образом пересылать их.
 
-Basically, it allows for data coming in from your VPN client will be routed to
-other places like your home network, or the internet.
+По сути, это позволяет данным, поступающим от вашего VPN-клиента, маршрутизироваться в другие места, такие как ваша домашняя сеть или интернет.
 
-To enable IP forwarding, run the following commands directly on your **host**
-system (e.g., Ubuntu, Debian).
+Чтобы включить пересылку IP, выполните следующие команды непосредственно в вашей **хост**-системе (например, Ubuntu, Debian).
 
 ```bash
 sudo sysctl -w net.ipv4.ip_forward=1
@@ -468,27 +350,19 @@ echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p /etc/sysctl.conf
 ```
 
-## Backups
+## Резервное копирование
 
-The WireGuard add-on can be backed up using Home Assistant Backups. There is one
-caveat to take into account: A partial backup of the add-on DOES NOT contain
-the generated client configurations, including their public/private keys
-(if those keys are generated by the add-on).
+Дополнение WireGuard можно резервировать с помощью резервных копий Home Assistant. Следует учитывать один нюанс: частичная резервная копия дополнения НЕ СОДЕРЖИТ сгенерированные конфигурации клиентов, включая их открытые/закрытые ключи (если эти ключи были сгенерированы дополнением).
 
-Client configurations are stored in the `/ssl/wireguard` folder. If you
-use partial backups, please be sure to backup both the `ssl` folder and the
-add-on.
+Конфигурации клиентов хранятся в папке `/ssl/wireguard`. Если вы используете частичные резервные копии, обязательно создавайте резервную копию как папки `ssl`, так и дополнения.
 
-## WireGuard status API
+## API состояния WireGuard
 
-This add-on provides a simple WireGuard status API. This API is not an
-official API, darn simple, and experimental, but does allow you to pull
-in data from the add-on into Home Assistant.
+Это дополнение предоставляет простой API состояния WireGuard. Этот API не является официальным, чертовски прост и экспериментален, но позволяет получать данные из дополнения в Home Assistant.
 
-With the use of the [Home Assistant RESTful][ha-rest] integration, one should
-be able to grab some interesting data from this add-on.
+Используя интеграцию [Home Assistant RESTful][ha-rest], можно получить некоторые интересные данные из этого дополнения.
 
-Example:
+Пример:
 
 ```yaml
 sensor:
@@ -496,93 +370,58 @@ sensor:
     resource: http://a0d7b954-wireguard
 ```
 
-At this moment, we do not have template or examples on how this could be
-used effectively with Home Assistant.
-If you have, sharing would be appreciated!
+На данный момент у нас нет шаблонов или примеров того, как это можно эффективно использовать с Home Assistant.
+Если у вас есть, поделитесь, это будет оценено!
 
-## Troubleshooting
+## Устранение неполадок
 
-- You can test if the tunnel works (when not using custom DNS servers), by
-  visiting <http://homeassistant:8123>. If a Home Assistant login page appears,
-  it is working!
-- Changes to peer/client configuration of this add-on, are not automatically
-  passed to your (already) configured clients. You have to change those
-  manually on your client device OR remove the WireGuard profile on the client
-  device and load the new client configuration (e.g., by scanning the QR
-  code).
-- If you are running the [AdGuard][adguard] add-on,
-  you can add `172.30.32.1` as a DNS IP address the list to use it.
-- If you run a protection service like CloudFlare on your `server.host`
-  address, please remember, that WireGuard will try to connect to CloudFlare
-  in that case (and not your Home). Please consider using your IP
-  address in the `server.host` field, or get an addition DNS record (e.g.,
-  using DuckDNS) that does point directly to your IP address.
-- If the initial connection from you client fails, this can be caused by
-  resolving issues of `server.host` on the client device. You can consider
-  solving this by editing the "Endpoint" setting on the client on the device
-  in the connection profile.
-- We had reports of people with connection issues on the client side, being
-  resolved by configuring/setting the `ListenPort = 51820` on the client
-  device in the connection profile (in `[Interface]` section).
+- Вы можете проверить, работает ли туннель (при использовании пользовательских DNS-серверов), посетив <http://homeassistant:8123>. Если появится страница входа в Home Assistant, значит, всё работает!
+- Изменения в конфигурации пира/клиента этого дополнения не передаются автоматически вашим (уже) настроенным клиентам. Вы должны изменить их вручную на своем клиентском устройстве ИЛИ удалить профиль WireGuard на клиентском устройстве и загрузить новую конфигурацию клиента (например, отсканировав QR-код).
+- Если вы используете дополнение [AdGuard][adguard], вы можете добавить `172.30.32.1` в качестве IP-адреса DNS в список, чтобы использовать его.
+- Если вы используете службу защиты, такую как CloudFlare, для вашего адреса `server.host`, помните, что в этом случае WireGuard попытается подключиться к CloudFlare (а не к вашему дому). Пожалуйста, рассмотрите возможность использования вашего IP-адреса в поле `server.host` или получите дополнительную DNS-запись (например, с помощью DuckDNS), которая указывает непосредственно на ваш IP-адрес.
+- Если первоначальное подключение от вашего клиента не удается, это может быть вызвано проблемами разрешения `server.host` на клиентском устройстве. Вы можете рассмотреть возможность решения этой проблемы путем редактирования настройки «Конечная точка» на клиенте в профиле подключения.
+- Мы получали сообщения о проблемах с подключением на стороне клиента, которые решались настройкой/установкой `ListenPort = 51820` на клиентском устройстве в профиле подключения (в разделе `[Interface]`).
 
-## Changelog & Releases
+## Журнал изменений и релизы
 
-This repository keeps a change log using [GitHub's releases][releases]
-functionality.
+Этот репозиторий ведет журнал изменений, используя функциональность [релизов GitHub][releases].
 
-Releases are based on [Semantic Versioning][semver], and use the format
-of `MAJOR.MINOR.PATCH`. In a nutshell, the version will be incremented
-based on the following:
+Релизы основаны на [семантическом версионировании][semver] и используют формат `MAJOR.MINOR.PATCH`. В двух словах, версия будет увеличиваться в зависимости от следующего:
 
-- `MAJOR`: Incompatible or major changes.
-- `MINOR`: Backwards-compatible new features and enhancements.
-- `PATCH`: Backwards-compatible bugfixes and package updates.
+- `MAJOR`: Несовместимые или крупные изменения.
+- `MINOR`: Обратно совместимые новые функции и улучшения.
+- `PATCH`: Обратно совместимые исправления ошибок и обновления пакетов.
 
-## Support
+## Поддержка
 
-Got questions?
+Есть вопросы?
 
-You have several options to get them answered:
+У вас есть несколько вариантов, чтобы получить ответы:
 
-- The [Home Assistant Community Add-ons Discord chat server][discord] for add-on
-  support and feature requests.
-- The [Home Assistant Discord chat server][discord-ha] for general Home
-  Assistant discussions and questions.
-- The Home Assistant [Community Forum][forum].
-- Join the [Reddit subreddit][reddit] in [/r/homeassistant][reddit]
+- [Сервер Discord Home Assistant Community Add-ons][discord] для поддержки дополнений и запросов функций.
+- [Сервер Discord Home Assistant][discord-ha] для общих обсуждений и вопросов по Home Assistant.
+- [Форум сообщества][forum] Home Assistant.
+- Присоединяйтесь к [сабреддиту Reddit][reddit] в [/r/homeassistant][reddit]
 
-You could also [open an issue here][issue] GitHub.
+Вы также можете [открыть вопрос здесь][issue] на GitHub.
 
-## Authors & contributors
+## Авторы и участники
 
-The original setup of this repository is by [Franck Nijhof][frenck].
+Первоначальная настройка этого репозитория выполнена [Франком Нейхофом][frenck].
 
-For a full list of all authors and contributors,
-check [the contributor's page][contributors].
+Полный список всех авторов и участников смотрите на [странице участников][contributors].
 
-## License
+## Лицензия
 
-MIT License
+Лицензия MIT
 
 Copyright (c) 2019-2023 Franck Nijhof
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Настоящим предоставляется бесплатное разрешение любому лицу, получающему копию этого программного обеспечения и связанных с ним файлов документации («Программное обеспечение»), для использования Программного обеспечения без ограничений, включая, без ограничений, права на использование, копирование, изменение, слияние, публикацию, распространение, сублицензирование и/или продажу копий Программного обеспечения, а также разрешение лицам, которым предоставляется Программное обеспечение, делать это при соблюдении следующих условий:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Вышеупомянутое уведомление об авторских правах и это уведомление о разрешении должны быть включены во все копии или существенные части Программного обеспечения.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ ПРЕДОСТАВЛЯЕТСЯ «КАК ЕСТЬ», БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ, ЯВНЫХ ИЛИ ПОДРАЗУМЕВАЕМЫХ, ВКЛЮЧАЯ, НО НЕ ОГРАНИЧИВАЯСЬ, ГАРАНТИЯМИ ТОВАРНОЙ ПРИГОДНОСТИ, СООТВЕТСТВИЯ ПО ОПРЕДЕЛЕННОМУ НАЗНАЧЕНИЮ И ОТСУТСТВИЯ НАРУШЕНИЙ. НИ В КАКОМ СЛУЧАЕ АВТОРЫ ИЛИ ПРАВООБЛАДАТЕЛИ НЕ НЕСУТ ОТВЕТСТВЕННОСТИ ПО КАКИМ-ЛИБО ИСКАМ, ЗА УЩЕРБ ИЛИ ПО ИНЫМ ТРЕБОВАНИЯМ, БУДЬ ТО В ДЕЙСТВИЯХ ПО КОНТРАКТУ, ДЕЛИКТУ ИЛИ ИНЫХ, ВОЗНИКШИХ ИЗ, ВНЕ ИЛИ В СВЯЗИ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ ИЛИ ИСПОЛЬЗОВАНИЕМ ИЛИ ИНЫМИ ДЕЙСТВИЯМИ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
 
 [addon-badge]: https://my.home-assistant.io/badges/supervisor_addon.svg
 [addon]: https://my.home-assistant.io/redirect/supervisor_addon/?addon=a0d7b954_wireguard&repository_url=https%3A%2F%2Fgithub.com%2Fhassio-addons%2Frepository
