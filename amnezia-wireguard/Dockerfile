@@ -2,27 +2,27 @@ ARG BUILD_FROM=ghcr.io/hassio-addons/base:16.3.6
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}
 
-# Amnezia Wireguart Tools version
+# AmneziaWG Tools версия
 ENV AWG_TOOLS=v1.0.20241018
-# Amnezia WG GO version
+# AmneziaWG GO версия
 ENV AWG_GO=v0.2.12
 
-# Set shell
+# Ставим терминал
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Setup base
+# Настройка базы
 # hadolint ignore=DL3003
 RUN \
     apk add --no-cache --virtual .build-dependencies \
-        build-base=0.5-r3 \
+        build-base \
         linux-headers \
-        git=2.45.2-r0 \
+        git \
     \
     && apk add --no-cache \
-        go=1.22.10-r0 \
-        iptables=1.8.10-r3 \
-        libqrencode-tools=4.1.1-r2 \
-        openresolv=3.13.2-r0 \
+        go \
+        iptables \
+        libqrencode-tools \
+        openresolv \
     \
     && ln -sf /sbin/xtables-nft-multi /sbin/ip6tables \
     && ln -sf /sbin/xtables-nft-multi /sbin/iptables \
@@ -43,10 +43,10 @@ RUN \
         .build-dependencies \
         go
 
-# Copy root filesystem
+# Копирование корневой файловой системы
 COPY rootfs /
 
-# Build arguments
+# Аргументы сборки
 ARG BUILD_ARCH
 ARG BUILD_DATE
 ARG BUILD_DESCRIPTION
@@ -55,7 +55,7 @@ ARG BUILD_REF
 ARG BUILD_REPOSITORY
 ARG BUILD_VERSION
 
-# Labels
+# Лейблы
 LABEL \
     io.hass.name="${BUILD_NAME}" \
     io.hass.description="${BUILD_DESCRIPTION}" \
