@@ -12,6 +12,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Настройка базы
 # hadolint ignore=DL3003
+RUN apk update
+RUN apk upgrade
+
 RUN \
     apk add --no-cache --virtual .build-dependencies \
         build-base \
