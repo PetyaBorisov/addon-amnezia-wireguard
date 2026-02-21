@@ -1,5 +1,5 @@
 ---
-name: AmneziaWG
+name: AmneziaWG (PetyaBorisov fork)
 version: dev
 slug: wireguard
 description: WireGuard-Go fork with protection against DPI systems.
