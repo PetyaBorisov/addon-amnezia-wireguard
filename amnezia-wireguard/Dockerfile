@@ -12,7 +12,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Настройка базы
 # hadolint ignore=DL3003
-RUN sed -i 's|https://dl-cdn.alpinelinux.org|https://mirror.yandex.ru/mirrors|g' /etc/apk/repositories
 RUN apk update && apk upgrade
 
 RUN apk add --no-cache iptables iproute2 libqrencode-tools openresolv musl musl-utils && ln -sf /sbin/xtables-nft-multi /sbin/ip6tables && ln -sf /sbin/xtables-nft-multi /sbin/iptables 
