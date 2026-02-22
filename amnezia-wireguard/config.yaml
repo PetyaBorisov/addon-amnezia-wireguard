@@ -11,6 +11,7 @@ arch:
   - armv7
 map:
   - share:rw
+  - ssl:rw
 init: false
 ports:
   80/tcp: null
@@ -25,8 +26,6 @@ privileged:
   - NET_ADMIN
 devices:
   - /dev/net/tun
-map:
-  - ssl:rw
 options:
   server:
     host: myautomatedhome.duckdns.org
