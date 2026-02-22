@@ -41,8 +41,7 @@ RUN git clone --depth=1 --branch $AWG_GO "https://github.com/amnezia-vpn/amnezia
     
 RUN rm -f -r /tmp/* \
     && apk del --no-cache --purge \
-        .build-dependencies \
-        go
+        .build-dependencies
 
 # Копирование корневой файловой системы
 COPY rootfs /
