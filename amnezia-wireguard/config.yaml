@@ -1,7 +1,7 @@
 ---
 name: AmneziaWG (PetyaBorisov fork)
 version: dev
-slug: wireguard
+slug: amneziawg
 description: WireGuard-Go fork with protection against DPI systems.
 url: https://github.com/yury-sannikov/addon-amnezia-wireguard
 codenotary: codenotary@frenck.dev
