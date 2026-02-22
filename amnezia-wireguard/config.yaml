@@ -1,6 +1,6 @@
 ---
 name: AmneziaWG (PetyaBorisov fork)
-version: "dev-0.0.7"
+version: "dev-0.0.8"
 slug: amneziawg-ru
 description: WireGuard-Go fork with protection against DPI systems.
 url: https://github.com/yury-sannikov/addon-amnezia-wireguard
@@ -22,10 +22,14 @@ ports_description:
   51820/udp: "WireGuard: forward this port in your router"
   51821/udp: "Auxiliary port for the peer"
 hassio_api: true
+host_network: true
+full_access: false
 privileged:
   - NET_ADMIN
+  - SYS_MODULE
+  - SYS_RAWIO
 devices:
-  - /dev/net/tun
+  - /dev/net/tun:/dev/net/tun
 options:
   server:
     host: myautomatedhome.duckdns.org
