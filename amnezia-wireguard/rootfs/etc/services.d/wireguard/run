@@ -7,7 +7,7 @@ declare interface
 
 s6-svc -O /run/service/wireguard
 
-mkdir /share/amneziawg
+mkdir -p /share/amneziawg
 bashio::log.info "Поиск конфигурации WireGuard в /share/amneziawg/..."
 if [ -f "/share/amneziawg/wg0.conf" ]; then
     bashio::log.info "Обнаружена конфигурация WireGuard в /share/amneziawg! Обновление конфигурации..."
