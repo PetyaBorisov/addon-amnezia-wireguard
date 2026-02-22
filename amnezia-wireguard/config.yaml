@@ -52,7 +52,7 @@ schema:
       - str
     dns:
       - str
-    private_key: password?
+    private_key: str?
     public_key: str?
     fwmark: str?
     table: str?
