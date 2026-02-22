@@ -14,7 +14,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # hadolint ignore=DL3003
 RUN apk update && apk upgrade
 
-RUN apk add --no-cache iptables libqrencode-tools openresolv musl musl-utils && ln -sf /sbin/xtables-nft-multi /sbin/ip6tables && ln -sf /sbin/xtables-nft-multi /sbin/iptables 
+RUN apk add --no-cache iptables iproute2 libqrencode-tools openresolv musl musl-utils && ln -sf /sbin/xtables-nft-multi /sbin/ip6tables && ln -sf /sbin/xtables-nft-multi /sbin/iptables 
 
 RUN apk add --no-cache --virtual .build-dependencies build-base linux-headers git go
     
