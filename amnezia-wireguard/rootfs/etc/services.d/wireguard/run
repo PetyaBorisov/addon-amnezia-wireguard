@@ -1,26 +1,46 @@
 #!/command/with-contenv bashio
 # ==============================================================================
-# Home Assistant Community Add-on: WireGuard
-# Runs WireGuard
+# Home Assistant Аддон Сообщества: WireGuard
+# Запускает WireGuard
 # ==============================================================================
 declare interface
 
 s6-svc -O /run/service/wireguard
 
-bashio::log.info "Starting WireGuard..."
+mkdir /share/amneziawg
+bashio::log.info "Поиск конфигурации WireGuard в /share/amneziawg/..."
+if [ -f "/share/amneziawg/wg0.conf" ]; then
+    bashio::log.info "Обнаружена конфигурация WireGuard в /share/amneziawg! Обновление конфигурации..."
+    # Создаем папку если её нет и копируем конфиг
+    mkdir -p /etc/amnezia/amneziawg/
+    cp /share/amneziawg/wg0.conf /etc/amnezia/amneziawg/wg0.conf
+else
+    bashio::log.warning "В /share/amneziawg нет конфигураций, используется текущая конфигурация"
+fi
 
-# This is alpha software. We need to set this to instruct
-# WireGuard we are OK to go.
+bashio::log.info "Поиск конфигурации аддона в /share/amneziawg/..."
+if [ -f "/share/amneziawg/options.json" ]; then
+    bashio::log.info "Обнаружена конфигурация аддона в /share/amneziawg! Обновление конфигурации..."
+    cp /share/amneziawg/options.json /data/options.json
+else
+    bashio::log.warning "В /share/amneziawg нет конфигураций, используется текущая конфигурация"
+fi
+
+bashio::log.info "Запуск WireGuard..."
+
+# Это программное обеспечение альфа. Нам нужно настроить его на инструктаж
+# WireGuard мы ГОТОВЫ к работе.
 export WG_I_PREFER_BUGGY_USERSPACE_TO_POLISHED_KMOD=1
 
-# Get the interface
+# Получить интерфейс
 interface="wg0"
 if bashio::config.has_value "server.interface"; then
     interface=$(bashio::config "server.interface")
 fi
 
 # Run the WireGuard
-echo "--- WireGuard configuration ---"
+# Запуск WireGuard
+echo "--- Конфигурация WireGuard ---"
 cat /etc/amnezia/amneziawg/"${interface}".conf
 echo "-------------------------------"
 exec awg-quick up "${interface}"
